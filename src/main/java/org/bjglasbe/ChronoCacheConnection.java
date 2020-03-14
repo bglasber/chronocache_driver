@@ -1,3 +1,5 @@
+package org.bjglasbe;
+
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;

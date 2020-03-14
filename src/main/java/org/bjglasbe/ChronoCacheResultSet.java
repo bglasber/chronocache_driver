@@ -1,3 +1,5 @@
+package org.bjglasbe;
+
 import java.io.InputStream;
 import java.io.Reader;
 
@@ -26,7 +28,6 @@ import java.sql.SQLWarning;
 import java.sql.Time;
 import java.sql.Timestamp;
 
-
 public class ChronoCacheResultSet implements ResultSet {
 
     private List<Map<String,Object>> resultSet;
@@ -38,12 +39,13 @@ public class ChronoCacheResultSet implements ResultSet {
         List<Map<String, Object>> resultSet
     ) {
         this.resultSet = resultSet;
-        this.currentRowId = 0;
+        this.currentRowId = -1;
 
         idToColName = new HashMap<>();
-        if( !idToColName.isEmpty() ) {
+        colNameToId = new HashMap<>();
+        if( !resultSet.isEmpty() ) {
             Map<String, Object> row = resultSet.get( 0 );
-            Integer i = 0;
+            Integer i = 1;
             for( String colName : row.keySet() ) {
                colNameToId.put( colName, i ); 
                idToColName.put( i, colName );
@@ -126,8 +128,15 @@ public class ChronoCacheResultSet implements ResultSet {
 
     private <T> T getColumnValueAsType( String colName, Class<T> type ) throws SQLException {
         Map<String,Object> row = resultSet.get( currentRowId );
+        System.out.println("We got row: " + row );
         Object val = row.get( colName );
-        if( val == null || !type.isInstance(type) ) {
+        System.out.println("We got value: " + val );
+        if( val == null ) {
+            throw new SQLException(
+                    String.format( "No val for column %s in row %d\n",
+                        colName, currentRowId ) );
+        }
+        if( !type.isInstance(val) ) {
             throw new SQLException(
                     String.format( "val in column %s is not of type %s",
                         colName, type ) );
@@ -137,9 +146,10 @@ public class ChronoCacheResultSet implements ResultSet {
 
     private <T> T getColumnValueAsType( int columnIndex, Class<T> type ) throws SQLException {
         String colName = idToColName.get( columnIndex );
+        System.out.println( "ColInd: " + columnIndex + " " + idToColName );
         if( colName == null ) {
             throw new SQLException(
-                    String.format( "ColumnName %s not found") );
+                    String.format( "ColumnName %s not found", colName ) );
         }
         return getColumnValueAsType( colName, type );
     }
