@@ -65,13 +65,12 @@ public class ChronoCacheResultSet implements ResultSet {
 
     @Override
     public void afterLast() throws SQLException {
-        // Move to the end (technically not after...)
-        this.currentRowId = resultSet.size()-1;
+        this.currentRowId = resultSet.size();
     } 
     @Override
     public void beforeFirst() throws SQLException {
         //Move to the first
-        this.currentRowId = 0;
+        this.currentRowId = -1;
     }
 
     @Override
@@ -131,6 +130,7 @@ public class ChronoCacheResultSet implements ResultSet {
         System.out.println("We got row: " + row );
         Object val = row.get( colName );
         System.out.println("We got value: " + val );
+        System.out.println( val.getClass().getName() );
         if( val == null ) {
             throw new SQLException(
                     String.format( "No val for column %s in row %d\n",
@@ -256,30 +256,30 @@ public class ChronoCacheResultSet implements ResultSet {
     // Continue from here.
     @Override
     public Date getDate( int columnIndex ) throws SQLException {
-        String val = getColumnValueAsType( columnIndex, String.class );
+        Date val = getColumnValueAsType( columnIndex, Date.class );
         // FIXME: Probably need to Strformat correctly.
-        return Date.valueOf( val );
+        return val;
     }
 
     @Override
     public Date getDate(int columnIndex, Calendar cal) throws SQLException {
-        String val = getColumnValueAsType( columnIndex, String.class );
+        Date val = getColumnValueAsType( columnIndex, Date.class );
         // FIXME: Probably need to Strformat correctly.
-        return Date.valueOf( val );
+        return val;
     }
 
     @Override
     public Date getDate(String columnLabel) throws SQLException {
-        String val = getColumnValueAsType( columnLabel, String.class );
+        Date val = getColumnValueAsType( columnLabel, Date.class );
         // FIXME: Probably need to Strformat correctly.
-        return Date.valueOf( val );
+        return val;
     }
 
     @Override
     public Date getDate(String columnLabel, Calendar cal) throws SQLException {
-        String val = getColumnValueAsType( columnLabel, String.class );
+        Date val = getColumnValueAsType( columnLabel, Date.class );
         // FIXME: Probably need to Strformat correctly.
-        return Date.valueOf( val );
+        return val;
     }
 
     @Override
@@ -471,58 +471,58 @@ public class ChronoCacheResultSet implements ResultSet {
 
     @Override
     public Time getTime(int columnIndex) throws SQLException {
-        String s = getColumnValueAsType( columnIndex, String.class );
+        Time s = getColumnValueAsType( columnIndex, Time.class );
         // FIXME: Properly convert time.
-        return Time.valueOf( s );
+        return s;
     }
 
     @Override
     public Time getTime(int columnIndex, Calendar cal) throws SQLException {
-        String s = getColumnValueAsType( columnIndex, String.class );
+        Time s = getColumnValueAsType( columnIndex, Time.class );
         // FIXME: Properly convert time.
-        return Time.valueOf( s );
+        return s;
     }
 
     @Override
     public Time getTime(String columnLabel) throws SQLException {
-        String s = getColumnValueAsType( columnLabel, String.class );
+        Time s = getColumnValueAsType( columnLabel, Time.class );
         // FIXME: Properly convert time.
-        return Time.valueOf( s );
+        return s;
 
     }
 
     @Override
     public Time getTime(String columnLabel, Calendar cal) throws SQLException {
-        String s = getColumnValueAsType( columnLabel, String.class );
+        Time s = getColumnValueAsType( columnLabel, Time.class );
         // FIXME: Properly convert time.
-        return Time.valueOf( s );
+        return s;
     }
     @Override
     public Timestamp getTimestamp(int columnIndex) throws SQLException {
-        String s = getColumnValueAsType( columnIndex, String.class );
+        Timestamp s = getColumnValueAsType( columnIndex, Timestamp.class );
         // FIXME: Properly convert time.
-        return Timestamp.valueOf( s );
+        return s;
     }
 
     @Override
     public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-        String s = getColumnValueAsType( columnIndex, String.class );
+        Timestamp s = getColumnValueAsType( columnIndex, Timestamp.class );
         // FIXME: Properly convert time.
-        return Timestamp.valueOf( s );
+        return s;
     }
 
     @Override
     public Timestamp getTimestamp(String columnLabel) throws SQLException {
-        String s = getColumnValueAsType( columnLabel, String.class );
+        Timestamp s = getColumnValueAsType( columnLabel, Timestamp.class );
         // FIXME: Properly convert time.
-        return Timestamp.valueOf( s );
+        return s;
     }
 
     @Override
     public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
-        String s = getColumnValueAsType( columnLabel, String.class );
+        Timestamp s = getColumnValueAsType( columnLabel, Timestamp.class );
         // FIXME: Properly convert time.
-        return Timestamp.valueOf( s );
+        return s;
     }
 
     @Override
@@ -573,7 +573,7 @@ public class ChronoCacheResultSet implements ResultSet {
     }
     @Override
     public boolean isBeforeFirst() {
-        return currentRowId == 0;
+        return currentRowId == -1;
     }
     @Override
     public boolean isClosed() {
@@ -600,10 +600,10 @@ public class ChronoCacheResultSet implements ResultSet {
     }
     @Override
     public boolean next() {
-        if( currentRowId == resultSet.size()-1 ) {
+        currentRowId = Math.min( currentRowId+1, resultSet.size() );
+        if( currentRowId >= resultSet.size() ) {
             return false;
         }
-        currentRowId++;
         return true;
     }
     @Override
