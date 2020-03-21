@@ -49,6 +49,7 @@ public class ChronoCacheResultSet implements ResultSet {
             for( String colName : row.keySet() ) {
                colNameToId.put( colName, i ); 
                idToColName.put( i, colName );
+               i++;
             }
         }
     }
@@ -56,6 +57,7 @@ public class ChronoCacheResultSet implements ResultSet {
     @Override
     public boolean absolute( int row ) throws SQLException {
         //Move to this row number
+        row = row-1;
         if( row >= 0 && row < resultSet.size() ) {
             this.currentRowId = row;
             return true;
@@ -127,10 +129,7 @@ public class ChronoCacheResultSet implements ResultSet {
 
     private <T> T getColumnValueAsType( String colName, Class<T> type ) throws SQLException {
         Map<String,Object> row = resultSet.get( currentRowId );
-        System.out.println("We got row: " + row );
         Object val = row.get( colName );
-        System.out.println("We got value: " + val );
-        System.out.println( val.getClass().getName() );
         if( val == null ) {
             throw new SQLException(
                     String.format( "No val for column %s in row %d\n",
@@ -146,7 +145,6 @@ public class ChronoCacheResultSet implements ResultSet {
 
     private <T> T getColumnValueAsType( int columnIndex, Class<T> type ) throws SQLException {
         String colName = idToColName.get( columnIndex );
-        System.out.println( "ColInd: " + columnIndex + " " + idToColName );
         if( colName == null ) {
             throw new SQLException(
                     String.format( "ColumnName %s not found", colName ) );
@@ -257,28 +255,24 @@ public class ChronoCacheResultSet implements ResultSet {
     @Override
     public Date getDate( int columnIndex ) throws SQLException {
         Date val = getColumnValueAsType( columnIndex, Date.class );
-        // FIXME: Probably need to Strformat correctly.
         return val;
     }
 
     @Override
     public Date getDate(int columnIndex, Calendar cal) throws SQLException {
         Date val = getColumnValueAsType( columnIndex, Date.class );
-        // FIXME: Probably need to Strformat correctly.
         return val;
     }
 
     @Override
     public Date getDate(String columnLabel) throws SQLException {
         Date val = getColumnValueAsType( columnLabel, Date.class );
-        // FIXME: Probably need to Strformat correctly.
         return val;
     }
 
     @Override
     public Date getDate(String columnLabel, Calendar cal) throws SQLException {
         Date val = getColumnValueAsType( columnLabel, Date.class );
-        // FIXME: Probably need to Strformat correctly.
         return val;
     }
 
@@ -621,18 +615,18 @@ public class ChronoCacheResultSet implements ResultSet {
     @Override
     public boolean relative(int rows) {
         if( rows < 0 ) {
-            if( currentRowId >= rows ) {
-                currentRowId = currentRowId - rows;
+            if( currentRowId + rows >= 0 ) {
+                currentRowId = currentRowId + rows;
                 return true;
             } else {
                 return false;
             }
         } else {
-            if( currentRowId + rows > resultSet.size()-1 ) {
+            if( currentRowId + rows >= resultSet.size() ) {
                 return false;
             } else {
                 currentRowId += rows;
-                return false;
+                return true;
             }
         }
     }

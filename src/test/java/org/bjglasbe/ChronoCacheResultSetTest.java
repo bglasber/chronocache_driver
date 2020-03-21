@@ -317,7 +317,90 @@ public class ChronoCacheResultSetTest {
         assertThat( ccResultSet.isLast(), equalTo(true) );
         assertThat( ccResultSet.next(), equalTo( false) );
         assertThat( ccResultSet.isAfterLast(), equalTo(true) );
-        
+    }
+
+    public ChronoCacheResultSet createTwoRowResultSet( Connection conn ) throws SQLException {
+        Statement stmt = conn.createStatement();
+        stmt.executeUpdate( "CREATE TABLE TEST( A int, B varchar(20) )" );
+        stmt.executeUpdate( "INSERT INTO TEST VALUES (1, 'brad')");
+        stmt.executeUpdate( "INSERT INTO TEST VALUES (2, 'michael')");
+        stmt.close();
+
+        Statement getValsStmt = conn.createStatement();
+        ResultSet resultSet = getValsStmt.executeQuery( "SELECT A,B FROM TEST" );
+        List<Map<String,Object>> jsonResultSet =
+            ResultSetConverter.getEntitiesFromResultSet( resultSet );
+        ChronoCacheResultSet ccResultSet = new ChronoCacheResultSet(
+                jsonResultSet );
+        getValsStmt.close();
+        conn.close();
+
+        return ccResultSet;
+    }
+
+    @Test
+    public void testMultiRowMultiTypes() throws SQLException {
+        String dbUrl = "jdbc:derby:memory:demo;create=true";
+        Connection conn = DriverManager.getConnection( dbUrl );
+
+        ChronoCacheResultSet ccResultSet = createTwoRowResultSet( conn );
+        assertThat( ccResultSet.isBeforeFirst(), equalTo( true ) );
+        assertThat( ccResultSet.next(), equalTo( true ) );
+        assertThat( ccResultSet.getInt(1), equalTo(1) );
+        assertThat( ccResultSet.getString(2), equalTo("brad") );
+        assertThat( ccResultSet.next(), equalTo( true ) );
+        assertThat( ccResultSet.getInt(1), equalTo(2) );
+        assertThat( ccResultSet.getString(2), equalTo("michael") );
+        assertThat( ccResultSet.isLast(), equalTo(true) );
+        assertThat( ccResultSet.next(), equalTo( false) );
+        assertThat( ccResultSet.isAfterLast(), equalTo(true) );
+    }
+
+    @Test
+    public void testAbsoluteRowPositioning() throws SQLException {
+        String dbUrl = "jdbc:derby:memory:demo;create=true";
+        Connection conn = DriverManager.getConnection( dbUrl );
+
+        ChronoCacheResultSet ccResultSet = createTwoRowResultSet( conn );
+        assertThat( ccResultSet.absolute(1), equalTo( true ) );
+        assertThat( ccResultSet.getInt(1), equalTo(1) );
+        assertThat( ccResultSet.getString(2), equalTo("brad") );
+        assertThat( ccResultSet.absolute(2), equalTo( true ) );
+        assertThat( ccResultSet.getInt(1), equalTo(2) );
+        assertThat( ccResultSet.getString(2), equalTo("michael") );
+        assertThat( ccResultSet.absolute(3), equalTo( false ) );
+    }
+
+    @Test
+    public void testRelativeRowPositioning() throws SQLException {
+        String dbUrl = "jdbc:derby:memory:demo;create=true";
+        Connection conn = DriverManager.getConnection( dbUrl );
+
+        ChronoCacheResultSet ccResultSet = createTwoRowResultSet( conn );
+        assertThat( ccResultSet.absolute(2), equalTo( true ) );
+        assertThat( ccResultSet.getInt(1), equalTo(2) );
+        assertThat( ccResultSet.getString(2), equalTo("michael") );
+        assertThat( ccResultSet.relative(-1), equalTo( true ) );
+        assertThat( ccResultSet.getInt(1), equalTo(1) );
+        assertThat( ccResultSet.getString(2), equalTo("brad") );
+
+        assertThat( ccResultSet.relative(1), equalTo( true ) );
+        assertThat( ccResultSet.getInt(1), equalTo(2) );
+        assertThat( ccResultSet.getString(2), equalTo("michael") );
+        assertThat( ccResultSet.relative(1), equalTo( false ) );
+        assertThat( ccResultSet.relative(-2), equalTo( false ) );
+    }
+
+    @Test
+    public void testPreviousNextCalls() throws SQLException {
+        String dbUrl = "jdbc:derby:memory:demo;create=true";
+        Connection conn = DriverManager.getConnection( dbUrl );
+
+        ChronoCacheResultSet ccResultSet = createTwoRowResultSet( conn );
+        assertThat( ccResultSet.next(), equalTo( true ) ); //first row
+        assertThat( ccResultSet.previous(), equalTo( false ) ); // before first
+        assertThat( ccResultSet.next(), equalTo( true ) ); //second
+        assertThat( ccResultSet.previous(), equalTo( true ) ); //first
     }
 
 }
