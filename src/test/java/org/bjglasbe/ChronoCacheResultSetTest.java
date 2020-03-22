@@ -45,7 +45,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testOneRowOfInts() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         Statement stmt = conn.createStatement();
@@ -75,7 +74,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testOneRowOfLongs() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         Statement stmt = conn.createStatement();
@@ -134,7 +132,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testOneRowOfDoubles() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         Statement stmt = conn.createStatement();
@@ -168,7 +165,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testOneRowOfStrings() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         Statement stmt = conn.createStatement();
@@ -196,7 +192,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testOneRowOfDates() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         Statement stmt = conn.createStatement();
@@ -230,7 +225,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testOneRowOfTimestamps() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         Statement stmt = conn.createStatement();
@@ -262,7 +256,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testOneRowOfTime() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         Statement stmt = conn.createStatement();
@@ -291,7 +284,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testTwoRows() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         Statement stmt = conn.createStatement();
@@ -340,7 +332,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testMultiRowMultiTypes() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         ChronoCacheResultSet ccResultSet = createTwoRowResultSet( conn );
@@ -358,7 +349,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testAbsoluteRowPositioning() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         ChronoCacheResultSet ccResultSet = createTwoRowResultSet( conn );
@@ -373,7 +363,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testRelativeRowPositioning() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         ChronoCacheResultSet ccResultSet = createTwoRowResultSet( conn );
@@ -393,7 +382,6 @@ public class ChronoCacheResultSetTest {
 
     @Test
     public void testPreviousNextCalls() throws SQLException {
-        String dbUrl = "jdbc:derby:memory:demo;create=true";
         Connection conn = DriverManager.getConnection( dbUrl );
 
         ChronoCacheResultSet ccResultSet = createTwoRowResultSet( conn );

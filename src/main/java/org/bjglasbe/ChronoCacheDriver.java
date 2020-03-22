@@ -3,6 +3,8 @@ package org.bjglasbe;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
+import java.sql.SQLException;
+
 import java.util.logging.Logger;
 import java.util.Properties;
 
@@ -15,15 +17,15 @@ public class ChronoCacheDriver implements Driver {
 
     @Override
     public boolean acceptsURL( String url ) {
-        if( !url.startsWith( "jdbc:cc/" ) ) {
+        if( !url.startsWith( "jdbc:cc://" ) ) {
             return false;
         }
         return true;
     }
 
     @Override
-    public Connection connect( String url, Properties info ) {
-        return null;
+    public Connection connect( String url, Properties info ) throws SQLException {
+        return new ChronoCacheConnection( url );
     }
 
     @Override

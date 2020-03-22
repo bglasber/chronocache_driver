@@ -16,13 +16,118 @@ import java.sql.SQLWarning;
 import java.sql.SQLXML;
 
 import java.util.concurrent.Executor;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.client.*;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+
 public class ChronoCacheConnection implements Connection {
 
-    public ChronoCacheConnection() {
+    private String jdbcUrl;
+    private String hostname;
+    private int port;
+
+    public ChronoCacheConnection( String url ) throws SQLException {
+        this.jdbcUrl = url;
+
+        // Check if we can connect with this URL
+        String[] chunks = url.split( ":" );
+
+        // Checks just in case
+        if( chunks.length < 4 ||
+            !(chunks[0].equals( "jdbc" )) ||
+            !(chunks[1].equals( "cc" )) ||
+            !(chunks[2].startsWith( "//" ))
+        ) { 
+            throw new SQLException( "Invalid URL: " + url );
+        }
+
+        this.port = -1;
+        try {
+            this.port =  Integer.parseInt( chunks[3] );
+        } catch( NumberFormatException e ) {
+            throw new SQLException( "Invalid port: " + chunks[3] );
+        }
+
+        this.hostname = chunks[2].substring( 2, chunks[2].length() );
     }
+
+	public static String quoteAndSanitize( String dirty ) {
+		return "'" + dirty.replace("'", "\\'") + "'";
+	}
+
+	public List<Map<String, Object>> restReadQuery( String queryString, int clientId ) {
+		// Make a new client pointing at Apollo/the rest service
+		Client client = ClientBuilder.newClient();
+		String strTarget = "http://" + hostname + ":" + port +"/kronos/rest/query/" + clientId;
+        WebTarget target = client.target( strTarget );
+
+		// Make the post query
+		long queryStart = System.nanoTime()/1000;
+        Invocation.Builder builder =
+            target.request(MediaType.APPLICATION_JSON);
+        Response response = builder.post(Entity.json( queryString ));
+        String queryResponse = response.readEntity( String.class );
+		long queryEnd = System.nanoTime()/1000;
+
+		// Deparse the result
+		ObjectMapper mapper = new ObjectMapper();
+		List<Map<String, Object>> data = null;
+		try
+		{
+			data = mapper.readValue( queryResponse, new TypeReference<List<Map<String, Object>>>() {} );
+		}
+		catch (Exception e)
+		{
+            //FIXME
+            // Do something here
+		}
+
+		assert data != null;
+
+		return data;
+	}
+
+	public long restOtherQuery(String queryString, int clientId)
+	{
+		// Make a new client pointing at Apollo/the rest service
+		Client client = ClientBuilder.newClient();
+		String strTarget = "http://" + hostname + ":8080/kronos/rest/query/" + clientId;
+		WebTarget target = client.target( strTarget );
+
+		// Make the post query
+		long queryStart = System.nanoTime()/1000;
+        Invocation.Builder builder =
+            target.request(MediaType.APPLICATION_JSON);
+        Response response = builder.post(Entity.json( queryString ));
+        String queryResponse = response.readEntity( String.class );
+		long queryEnd = System.nanoTime()/1000;
+
+		// Deparse the result
+		ObjectMapper mapper = new ObjectMapper();
+		long data = -1;
+		try
+		{
+			data = mapper.readValue(queryResponse, Long.class);
+		}
+		catch (Exception e)
+		{
+            //FIXME
+            // Do something here
+		}
+
+		assert data != -1;
+
+		return data;
+	}
 
     @Override
     public void abort( Executor executor ) {
@@ -67,8 +172,7 @@ public class ChronoCacheConnection implements Connection {
 
     @Override
     public Statement createStatement() {
-        //FIXME
-        return null;
+        return new ChronoCacheStatement( this );
     }
 
     @Override
@@ -76,8 +180,7 @@ public class ChronoCacheConnection implements Connection {
         int resultSetType,
         int resultSetConcurrency
     ) {
-        //FIXME
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -136,7 +239,7 @@ public class ChronoCacheConnection implements Connection {
     @Override
     public int getTransactionIsolation() {
         //SNAPSHOT ISOLATION
-        throw new UnsupportedOperationException();
+        return Connection.TRANSACTION_NONE;
     }
 
     @Override
