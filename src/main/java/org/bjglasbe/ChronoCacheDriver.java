@@ -3,6 +3,7 @@ package org.bjglasbe;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import java.util.logging.Logger;
@@ -10,10 +11,28 @@ import java.util.Properties;
 
 public class ChronoCacheDriver implements Driver {
 
+    public static ChronoCacheDriver registeredDriver = null; 
+
     public ChronoCacheDriver() {
     }
     
-    // TODO: Static DriverManager register goes here.
+    static {
+        try {
+            register();
+        } catch( SQLException e ) {
+        }
+    }
+
+    public static void register() throws SQLException {
+        ChronoCacheDriver driver = new ChronoCacheDriver();
+        DriverManager.registerDriver( driver );
+        ChronoCacheDriver.registeredDriver = driver;
+    }
+
+    public static boolean isRegistered() {
+        return registeredDriver != null;
+    }
+
 
     @Override
     public boolean acceptsURL( String url ) {
