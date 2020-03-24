@@ -239,7 +239,7 @@ public class ChronoCacheConnection implements Connection {
 
     @Override
     public DatabaseMetaData getMetaData() {
-        throw new UnsupportedOperationException(); 
+        return new ChronoCacheDatabaseMetaData( this );
     }
 
     @Override
