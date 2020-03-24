@@ -44,7 +44,7 @@ public class ChronoCacheDriver implements Driver {
 
     @Override
     public Connection connect( String url, Properties info ) throws SQLException {
-        return new ChronoCacheConnection( url );
+        return new ChronoCacheConnection( url, info );
     }
 
     @Override

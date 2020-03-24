@@ -33,10 +33,18 @@ public class ChronoCacheConnection implements Connection {
 
     private String jdbcUrl;
     private String hostname;
-    private int port;
+    private String username;
+    private String password;
 
-    public ChronoCacheConnection( String url ) throws SQLException {
+    private int port;
+    private Properties info;
+
+    public ChronoCacheConnection( String url, Properties info ) throws SQLException {
         this.jdbcUrl = url;
+        this.info = info;
+
+        this.username = info.getProperty( "username" );
+        this.password = info.getProperty( "password" );
 
         // Check if we can connect with this URL
         String[] chunks = url.split( ":" );
@@ -60,6 +68,13 @@ public class ChronoCacheConnection implements Connection {
         this.hostname = chunks[2].substring( 2, chunks[2].length() );
     }
 
+    public String getURL() {
+        return jdbcUrl;
+    }
+
+    public String getUserName() {
+        return this.getUserName();
+    }
 	public static String quoteAndSanitize( String dirty ) {
 		return "'" + dirty.replace("'", "\\'") + "'";
 	}
