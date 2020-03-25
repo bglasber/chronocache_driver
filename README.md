@@ -27,6 +27,10 @@ The ChronoCache system code will be freely available under the BSD-3 license. Th
 will also be made available shortly --- i.e. benchmark modifications to use REST --- under the original licenses for each
 benchmark.
 
+# Integrating with other benchmarks
+
+The [oltpbench_ycsb changes](https://github.com/bglasber/chronocache_driver/blob/master/oltpbench_cc_ycsb.patch) provide a proof of concept of how to integrate an OLTPBench workload with ChronoCache. Similar ideas may be used to integrate other benchmarks.
+
 ## Driver License
 
 BSD-3
