@@ -8,6 +8,7 @@ import java.sql.Clob;
 import java.sql.DatabaseMetaData;
 import java.sql.NClob;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
@@ -66,6 +67,40 @@ public class ChronoCacheConnection implements Connection {
         }
 
         this.hostname = chunks[2].substring( 2, chunks[2].length() );
+
+        // Try connect
+        connectOrThrow();
+    }
+
+    public Invocation.Builder makeClientRequestBuilder( int clientId ) {
+		Client client = ClientBuilder.newClient();
+		String strTarget = "http://" + hostname + ":" + port +"/kronos/rest/query/" + clientId;
+        WebTarget target = client.target( strTarget );
+        return target.request( MediaType.APPLICATION_JSON );
+    }
+
+    private String makeJsonQuery( String query ) {
+        StringBuilder sb = new StringBuilder();
+        sb.append( "{ \"query\": \"" );
+        sb.append( query );
+        sb.append( "\" }" );
+        return sb.toString();
+    }
+
+    private void connectOrThrow() throws SQLException { 
+        
+        Invocation.Builder builder = makeClientRequestBuilder( 0 );
+
+        String queryString = makeJsonQuery( "SELECT 1" );
+		// Make a post query
+        try {
+            long queryStart = System.nanoTime()/1000;
+            Response response = builder.post(Entity.json( queryString ));
+            String queryResponse = response.readEntity( String.class );
+            long queryEnd = System.nanoTime()/1000;
+        } catch( Exception e ) {
+            throw new SQLException( e );
+        }
     }
 
     public String getURL() {
@@ -79,17 +114,12 @@ public class ChronoCacheConnection implements Connection {
 		return "'" + dirty.replace("'", "\\'") + "'";
 	}
 
-	public List<Map<String, Object>> restReadQuery( String queryString, int clientId ) {
+	public ResultSet restReadQuery( String queryString, int clientId ) throws SQLException {
 		// Make a new client pointing at Apollo/the rest service
-		Client client = ClientBuilder.newClient();
-		String strTarget = "http://" + hostname + ":" + port +"/kronos/rest/query/" + clientId;
-        WebTarget target = client.target( strTarget );
-
+        Invocation.Builder builder = makeClientRequestBuilder( clientId );
 		// Make the post query
 		long queryStart = System.nanoTime()/1000;
-        Invocation.Builder builder =
-            target.request(MediaType.APPLICATION_JSON);
-        Response response = builder.post(Entity.json( queryString ));
+        Response response = builder.post(Entity.json( makeJsonQuery( queryString ) ));
         String queryResponse = response.readEntity( String.class );
 		long queryEnd = System.nanoTime()/1000;
 
@@ -102,36 +132,29 @@ public class ChronoCacheConnection implements Connection {
 		}
 		catch (Exception e)
 		{
-            //FIXME
-            // Do something here
+            throw new SQLException( e );
 		}
 
 		assert data != null;
 
-		return data;
+		return new ChronoCacheResultSet( data );
 	}
 
-	public long restOtherQuery(String queryString, int clientId)
-	{
+	public int restOtherQuery( String queryString, int clientId ) throws SQLException {
 		// Make a new client pointing at Apollo/the rest service
-		Client client = ClientBuilder.newClient();
-		String strTarget = "http://" + hostname + ":8080/kronos/rest/query/" + clientId;
-		WebTarget target = client.target( strTarget );
-
+        Invocation.Builder builder = makeClientRequestBuilder( clientId );
 		// Make the post query
 		long queryStart = System.nanoTime()/1000;
-        Invocation.Builder builder =
-            target.request(MediaType.APPLICATION_JSON);
-        Response response = builder.post(Entity.json( queryString ));
+        Response response = builder.post(Entity.json( makeJsonQuery( queryString ) ));
         String queryResponse = response.readEntity( String.class );
 		long queryEnd = System.nanoTime()/1000;
 
 		// Deparse the result
 		ObjectMapper mapper = new ObjectMapper();
-		long data = -1;
+		int data = -1;
 		try
 		{
-			data = mapper.readValue(queryResponse, Long.class);
+			data = mapper.readValue(queryResponse, Integer.class);
 		}
 		catch (Exception e)
 		{

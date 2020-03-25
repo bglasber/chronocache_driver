@@ -1,0 +1,139 @@
+diff --git a/config/sample_ycsb_config.xml b/config/sample_ycsb_config.xml
+index dd0e610..0434a63 100644
+--- a/config/sample_ycsb_config.xml
++++ b/config/sample_ycsb_config.xml
+@@ -2,24 +2,24 @@
+ <parameters>
+ 
+     <!-- Connection details -->
+-    <dbtype>mysql</dbtype>
+-    <driver>com.mysql.jdbc.Driver</driver>
+-    <DBUrl>jdbc:mysql://server:3306/ycsb</DBUrl>
+-    <username>user</username>
+-    <password>password</password>
++    <dbtype>postgres</dbtype>
++    <driver>org.postgresql.Driver</driver>
++    <DBUrl>jdbc:postgresql://localhost:5432/ycsb</DBUrl>
++    <username>postgres</username>
++    <password>postgres</password>
+     <isolation>TRANSACTION_SERIALIZABLE</isolation>
+     <uploadCode></uploadCode>
+     <uploadUrl></uploadUrl>
+     <!-- Scalefactor in YCSB is *1000 the number of rows in the USERTABLE-->
+-    <scalefactor>1200</scalefactor>
++    <scalefactor>100</scalefactor>
+     
+     <!-- The workload -->
+-    <terminals>50</terminals>
++    <terminals>25</terminals>
+     <works>
+         <work>
+           <time>300</time>
+-          <rate>10000</rate>
+-          <weights>50,5,15,10,10,10</weights>
++          <rate>100000</rate>
++          <weights>100,0,0,0,0,0</weights>
+         </work>
+     </works>
+ 
+diff --git a/src/com/oltpbenchmark/api/Worker.java b/src/com/oltpbenchmark/api/Worker.java
+index 8240809..5a1bb0d 100644
+--- a/src/com/oltpbenchmark/api/Worker.java
++++ b/src/com/oltpbenchmark/api/Worker.java
+@@ -79,12 +79,12 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
+ 
+         try {
+             this.conn = this.benchmarkModule.makeConnection();
+-            this.conn.setAutoCommit(false);
+             
+             // 2018-01-11: Since we want to support NoSQL systems 
+             // that do not support txns, we will not invoke certain JDBC functions
+             // that may cause an error in them.
+             if (this.wrkld.getDBType().shouldUseTransactions()) {
++                this.conn.setAutoCommit(false);
+                 this.conn.setTransactionIsolation(this.wrkld.getIsolationMode());
+             }
+         } catch (SQLException ex) {
+diff --git a/src/com/oltpbenchmark/benchmarks/ycsb/procedures/InsertRecord.java b/src/com/oltpbenchmark/benchmarks/ycsb/procedures/InsertRecord.java
+index a02d4c8..4824225 100644
+--- a/src/com/oltpbenchmark/benchmarks/ycsb/procedures/InsertRecord.java
++++ b/src/com/oltpbenchmark/benchmarks/ycsb/procedures/InsertRecord.java
+@@ -17,7 +17,7 @@
+ package com.oltpbenchmark.benchmarks.ycsb.procedures;
+ 
+ import java.sql.Connection;
+-import java.sql.PreparedStatement;
++import java.sql.Statement;
+ import java.sql.SQLException;
+ 
+ import com.oltpbenchmark.api.Procedure;
+@@ -30,12 +30,16 @@ public class InsertRecord extends Procedure {
+ 
+     // FIXME: The value in ysqb is a byteiterator
+     public void run(Connection conn, int keyname, String vals[]) throws SQLException {
+-        PreparedStatement stmt = this.getPreparedStatement(conn, this.insertStmt);
+-        stmt.setInt(1, keyname);
+-        for (int i = 0; i < vals.length; i++) {
+-            stmt.setString(i + 2, vals[i]);
++        Statement stmt = conn.createStatement();
++        StringBuilder sb = new StringBuilder();
++        sb.append( "INSERT INTO USERTABLE VALUES (");
++        // These characters screw with our interpretations of query strings, so get rid of them as they aren't necessary.
++        sb.append( keyname );
++        for( int i = 0; i < vals.length; i++ ) {
++            sb.append( ", '" + vals[i].replaceAll("\\\\", "x" ).replaceAll( "'", "x" ).replaceAll("\"", "x" ) + "'" );
+         }
+-        stmt.executeUpdate();
++        sb.append( ")" );
++        stmt.executeUpdate( sb.toString() );
+     }
+ 
+ }
+diff --git a/src/com/oltpbenchmark/benchmarks/ycsb/procedures/ReadRecord.java b/src/com/oltpbenchmark/benchmarks/ycsb/procedures/ReadRecord.java
+index e0d4cc7..642186e 100644
+--- a/src/com/oltpbenchmark/benchmarks/ycsb/procedures/ReadRecord.java
++++ b/src/com/oltpbenchmark/benchmarks/ycsb/procedures/ReadRecord.java
+@@ -17,7 +17,7 @@
+ package com.oltpbenchmark.benchmarks.ycsb.procedures;
+ 
+ import java.sql.Connection;
+-import java.sql.PreparedStatement;
++import java.sql.Statement;
+ import java.sql.ResultSet;
+ import java.sql.SQLException;
+ 
+@@ -32,14 +32,16 @@ public class ReadRecord extends Procedure{
+     
+ 	//FIXME: The value in ysqb is a byteiterator
+     public void run(Connection conn, int keyname, String results[]) throws SQLException {
+-        PreparedStatement stmt = this.getPreparedStatement(conn, readStmt);
+-        stmt.setInt(1, keyname);          
+-        ResultSet r = stmt.executeQuery();
+-        while(r.next()) {
++        Statement stmt = conn.createStatement();
++        StringBuilder sb = new StringBuilder();
++        sb.append( "SELECT * FROM USERTABLE WHERE YCSB_KEY=" );
++        sb.append( keyname );
++        ResultSet rs = stmt.executeQuery( sb.toString() );
++        while(rs.next()) {
+             for (int i = 0; i < YCSBConstants.NUM_FIELDS; i++)
+-                results[i] = r.getString(i+1);
++                results[i] = rs.getString(i+1);
+         } // WHILE
+-        r.close();
++        rs.close();
+     }
+ 
+ }
+diff --git a/src/com/oltpbenchmark/types/DatabaseType.java b/src/com/oltpbenchmark/types/DatabaseType.java
+index 499b2e3..f75555a 100644
+--- a/src/com/oltpbenchmark/types/DatabaseType.java
++++ b/src/com/oltpbenchmark/types/DatabaseType.java
+@@ -52,6 +52,7 @@ public enum DatabaseType {
+     CASSANDRA("com.github.adejanovski.cassandra.jdbc.CassandraDriver", true, true, false),
+     MEMSQL("com.mysql.jdbc.Driver", true, false, false),
+     NOISEPAGE("org.postgresql.Driver", false, false, true),
++    CHRONOCACHE("org.bjglasbe.ChronoCacheDriver", false, true, false ),
+     ;
+     
+     private DatabaseType(String driver,
