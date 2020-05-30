@@ -21,11 +21,7 @@ You can use the standard ```Class.forName("org.bjglasbe.ChronoCacheDriver")``` s
 The JDBC URL looks like: ```jdbc:cc://hostname:port```. Note that you will need to configure ChronoCache itself to
 interact with the remote database.
 
-## Reproducing experiment Results
-
-The ChronoCache system code is available under the Apache License [here](github.com/bglasber/chronocache). We intend to upstream relevant changes to the benchmark code (e.g. OLTPBench), but the code we used in our experiments is available upon request.
-
-# Integrating with other benchmarks
+# Integrating with benchmarks
 
 The [oltpbench_ycsb changes](https://github.com/bglasber/chronocache_driver/blob/master/oltpbench_cc_ycsb.patch) provide a proof of concept of how to integrate an OLTPBench workload with ChronoCache. Similar ideas may be used to integrate other benchmarks.
 
