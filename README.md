@@ -1,6 +1,6 @@
 # chronocache_driver
 
-This repository contains the source code for a prototype JDBC driver for the ChronoCache system. 
+This repository contains the source code for a prototype JDBC driver for the [ChronoCache system](github.com/bglasber/chronocache). 
 The ChronoCache system itself uses a REST interface that simplifies development --- this JDBC driver
 merely translates a subset of JDBC calls to REST calls to interact with ChronoCache. As many systems
 use JDBC to interact with a database, this enables easier integration with ChronoCache. Note, however,
@@ -23,9 +23,7 @@ interact with the remote database.
 
 ## Reproducing experiment Results
 
-The ChronoCache system code will be freely available under the BSD-3 license. The code we used for each Benchmark
-will also be made available shortly --- i.e. benchmark modifications to use REST --- under the original licenses for each
-benchmark.
+The ChronoCache system code is available under the Apache License [here](github.com/bglasber/chronocache). We intend to upstream relevant changes to the benchmark code (e.g. OLTPBench), but the code we used in our experiments is available upon request.
 
 # Integrating with other benchmarks
 
