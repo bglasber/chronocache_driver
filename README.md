@@ -1,6 +1,6 @@
 # chronocache_driver
 
-This repository contains the source code for a prototype JDBC driver for the [ChronoCache system](github.com/bglasber/chronocache). 
+This repository contains the source code for a prototype JDBC driver for the [ChronoCache system](http://github.com/bglasber/chronocache). 
 The ChronoCache system itself uses a REST interface that simplifies development --- this JDBC driver
 merely translates a subset of JDBC calls to REST calls to interact with ChronoCache. As many systems
 use JDBC to interact with a database, this enables easier integration with ChronoCache. Note, however,
